@@ -1,3 +1,4 @@
 hello 
 this file to test SBOM workflow.
 Test: PR1
+Test: PR2
