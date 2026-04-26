@@ -14,13 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Syft
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
-
       - name: Generate SBOM
-        run: |
-          syft dir:. -o cyclonedx-json > sbom.json
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.json
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
