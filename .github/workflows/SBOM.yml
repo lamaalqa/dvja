@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  generate-and-scan:
+  sbom-and-scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,13 +17,13 @@ jobs:
       - name: Install Syft
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
+          sudo install ./bin/syft /usr/local/bin/syft
+          syft version
 
-      # 👇 هذا للعرض (table)
-      - name: Generate SBOM (Table view)
+      - name: Generate SBOM (Table)
         run: |
           syft dir:. -o table > sbom.txt
 
-      # 👇 هذا للـ tools (JSON)
       - name: Generate SBOM (CycloneDX JSON)
         run: |
           syft dir:. -o cyclonedx-json > sbom.json
@@ -32,18 +32,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.50.0_Linux-64bit.deb
+          wget -qO trivy.deb https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.0_Linux-64bit.deb
+          sudo dpkg -i trivy.deb
+          trivy --version
 
       - name: Scan SBOM with Trivy
         run: |
           trivy sbom sbom.json -f json -o results.json
 
-      # 👇 ترفع كل شيء
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: outputs
+          name: sbom-and-results
           path: |
             sbom.txt
             sbom.json
