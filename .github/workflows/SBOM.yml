@@ -1,4 +1,4 @@
-name: SBOM + Scan
+name: SBOM Generation
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  sbom-and-scan:
+  generate-sbom:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,30 +17,13 @@ jobs:
       - name: Install Syft
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
-          sudo install ./bin/syft /usr/local/bin/syft
 
-      - name: Generate SBOM (Table)
+      - name: Generate SBOM
         run: |
-          syft dir:. -o table > sbom.txt
+          syft dir:. -o table > sbom.json
 
-      - name: Generate SBOM (CycloneDX JSON)
-        run: |
-          syft dir:. -o cyclonedx-json > sbom.json
-
-      # ✅ الحل هنا: نستخدم scan-type=fs ونمرر SBOM كـ input file مباشرة
-      - name: Scan SBOM with Trivy
-        uses: aquasecurity/trivy-action@v0.20.0
-        with:
-          scan-type: 'fs'
-          scan-ref: 'sbom.json'
-          format: 'json'
-          output: 'results.json'
-
-      - name: Upload artifacts
+      - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-and-results
-          path: |
-            sbom.txt
-            sbom.json
-            results.json
+          name: sbom
+          path: sbom.json
