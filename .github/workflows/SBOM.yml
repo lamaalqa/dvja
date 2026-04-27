@@ -14,32 +14,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ✅ Install Syft (fixed PATH)
       - name: Install Syft
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
           sudo install ./bin/syft /usr/local/bin/syft
           syft version
 
+      # 👀 Human-readable SBOM
       - name: Generate SBOM (Table)
         run: |
           syft dir:. -o table > sbom.txt
 
+      # 🔧 Machine-readable SBOM
       - name: Generate SBOM (CycloneDX JSON)
         run: |
           syft dir:. -o cyclonedx-json > sbom.json
 
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget -qO trivy.deb https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.0_Linux-64bit.deb
-          sudo dpkg -i trivy.deb
-          trivy --version
-
+      # 🚨 Scan SBOM باستخدام Trivy Action (بدون تثبيت يدوي)
       - name: Scan SBOM with Trivy
-        run: |
-          trivy sbom sbom.json -f json -o results.json
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: 'sbom'
+          input: 'sbom.json'
+          format: 'json'
+          output: 'results.json'
 
+      # 📦 Upload outputs
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
